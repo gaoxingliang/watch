@@ -78,6 +78,10 @@ public class Main {
                 s.changerate = s.changeprice / s.comparedprice;
                 s.synced = true;
             } else {
+                s.currentprice = 0;
+                s.changerate = 0;
+                s.changeprice = 0;
+                s.comparedprice = 0;
                 s.synced = false;
             }
         } catch(Exception e) {
