@@ -1,3 +1,10 @@
+import com.google.common.base.Splitter;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -10,16 +17,33 @@ public class Main {
     private static final String CLEAN = "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b";
 
     private static String C;
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws Exception {
+
+        List<String> checkStocks = new ArrayList<String>();
+        int refreshIntervalInMills = 1000;
+        if (args.length == 1 && new File(args[0]).exists()) {
+            Properties p = new Properties();
+            p.load(new FileInputStream(new File(args[0])));
+            String v = p.getProperty("stocks");
+            checkStocks = Splitter.on(",").trimResults().omitEmptyStrings().splitToList(v);
+            String refreshIntervalInMillsStr = p.getProperty("refreshIntervalInMills");
+            if (refreshIntervalInMillsStr != null) {
+                refreshIntervalInMills = Integer.valueOf(refreshIntervalInMillsStr);
+            }
+        } else {
+            for (String s : args) {
+                checkStocks.add(s);
+            }
+        }
 
         // All args are stock nums
-        for (String s : args) {
+        for (String s : checkStocks) {
             State st = new State();
             st.num = s;
             map.put(st.num, st);
-            es.scheduleAtFixedRate(() -> sync(st), 0, 1, TimeUnit.SECONDS);
+            es.scheduleAtFixedRate(() -> sync(st), 0, refreshIntervalInMills, TimeUnit.MILLISECONDS);
         }
-        es.scheduleAtFixedRate(Main::printAll, 1, 1, TimeUnit.SECONDS);
+        es.scheduleAtFixedRate(Main::printAll, refreshIntervalInMills, refreshIntervalInMills, TimeUnit.MILLISECONDS);
 
         Thread.sleep(1000000000);
     }
